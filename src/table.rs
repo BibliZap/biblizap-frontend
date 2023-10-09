@@ -76,13 +76,13 @@ pub fn table(props: &TableProps) -> Html {
             <table id="example" class="table" style="width:100%">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>{"Doi"}</th>
                         <th>{"Title"}</th>
                         <th>{"First author"}</th>
                         <th>{"Abstract"}</th>
                         <th>{"Year published"}</th>
                         <th>{"Score"}</th>
-                        <th>{"Blacklist"}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,13 +118,13 @@ pub fn row(props: &RowProps) -> Html {
 
     html! {
         <tr>
+            <td><input type={"checkbox"} class={"row-checkbox"} onchange={onchange}/></td>
             <td><a href={doi_link(props.article.doi.clone())}>{props.article.doi.clone().unwrap_or_default()}</a></td>
             <td>{props.article.title.clone().unwrap_or_default()}</td>
             <td>{props.article.first_author.clone().unwrap_or_default()}</td>
             <td>{props.article.summary.clone().unwrap_or_default()}</td>
             <td>{props.article.year_published.unwrap_or_default()}</td>
             <td>{props.article.score.unwrap_or_default()}</td>
-            <td><input type={"checkbox"} class={"row-checkbox"} onchange={onchange}/></td>
         </tr>
     }
 }
