@@ -1,107 +1,148 @@
 use yew::prelude::*;
+use thiserror::Error;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::ops::Deref;
+use std::rc::Rc;
+use std::cell::RefCell;
+
+mod table;
+use table::*;
+
+mod navbar;
+use navbar::*;
+
+mod wall;
+use wall::*;
+
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Json error")]
+    JsonError(#[from] serde_json::Error),
+    #[error("Request error")]
+    RequestError(#[from] gloo_net::Error),
+}
 
 #[function_component(App)]
 fn app() -> Html {
-    let on_click: Callback<MouseEvent> = Callback::from(move |_| {
-        let greeting = "aaa!".to_string();
-        web_sys::console::log_1(&greeting.into()); // if uncommented will print
-    });
+    let table_status = use_state(|| TableStatus::NotRequested);
+    let on_receiving_response = { 
+        let table_status = table_status.clone();
+        Callback::from(move |table: Result<Vec<Article>, Error>| {
+            match table {
+                Ok(table) => table_status.set(TableStatus::Available(table)),
+                Err(error) => table_status.set(TableStatus::RequestError(error.to_string())),
+            };
+        })
+    };
+    let on_requesting_table = {
+        let table_status = table_status.clone();
+        Callback::from(move |_: ()| {
+            table_status.set(TableStatus::Requested);
+        })
+    };
+
+    let blacklist = use_mut_ref(HashMap::<String, bool>::new);
+    let blacklist = use_state(|| blacklist);
+
+    let update_blacklist = {
+        let blacklist = blacklist.clone();
+        Callback::from(move |element : (String, bool)| {
+            let rc = blacklist.deref().to_owned();
+            rc.borrow_mut().insert(element.0, element.1);
+            blacklist.set(rc);
+        })
+    };
     html! {
         <main>
             <NavBar/>
             <Wall/>
-            <SnowballForm/>
-            <Button {on_click}/>
+            <SnowballForm {on_requesting_table} {on_receiving_response} {blacklist}/>
+            <TableContainer table_status={table_status.clone()} update_blacklist={update_blacklist}/>
         </main>
-    }
-}
-
-#[function_component]
-fn NavBar() -> Html {
-    html! {
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#" id="navbar-title">
-                <img src="/icons/biblizap-nosnowball-round-fill.svg" alt="" width="50" height="50" class="px-2"/>
-                {"BibliZap"}
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">
-                    <i class="bi bi-house-fill px-2"></i>
-                    {"Home"}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                    <i class="bi bi-lightbulb-fill px-2"></i>
-                    {"How it works"}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                    <i class="bi bi-send-fill px-2"></i>
-                    {"Contact"}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                    <i class="bi bi-info-circle-fill px-2"></i>
-                    {"Legal information"}
-                    </a>
-                </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    }
-}
-
-#[function_component]
-fn Wall() -> Html {
-    html! { 
-        <div class="container text-center mt-5">
-            <h1 class="main-title">
-                <img src="/icons/biblizap-snowball-round-fill.svg" id="logo" alt="" width="300vw"/>
-                {"BibliZap"}
-            </h1>
-        </div>
-    }
-}
-
-#[function_component]
-fn Button(props: &Props) -> Html {
-    html! {
-        <button class="btn btn-primary" onclick={&props.on_click}>{"Search for related articles"}</button>
     }
 }
 
 #[derive(Clone, PartialEq, Properties)]
 struct FormProps {
-    
+    on_requesting_table: Callback<()>,
+    on_receiving_response: Callback<Result<Vec<Article>, Error>>,
+    blacklist: UseStateHandle<Rc<RefCell<HashMap<String, bool>>>>
 }
 
 #[derive(Clone, PartialEq, Properties, Debug, Default, Serialize, Deserialize)]
-struct SnowballFormContent {
-    id_list: String,
+struct SnowballParameters {
+    output_max_size: usize,
+    depth: u8,
+    input_id_list: Vec<String>,
 }
+
+//todo: handle errors properly
+async fn get_response(form_content: &SnowballParameters) -> Result<Vec<Article>, Error> {
+    let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
+        .header("Access-Control-Allow-Origin", "*")
+        .body(serde_json::to_string(&form_content)?)?
+        .send()
+        .await?
+        .text()
+        .await?;
+
+    let value = serde_json::from_str::<serde_json::Value>(&response)?;
+    let mut articles = serde_json::from_value::<Vec<Article>>(value)?;
+
+    articles.sort_by_key(|x| -x.score.unwrap());
+    
+    Ok(articles)
+}
+
 
 #[function_component]
 fn SnowballForm(props: &FormProps) -> Html {
-    let form_content = use_state(|| SnowballFormContent::default());
     let id_list_node = use_node_ref();
+    let depth_node = use_node_ref();
+    let output_max_size_node = use_node_ref();
+    let blacklist = props.blacklist.clone()
+        .as_ref()
+        .borrow()
+        .clone()
+        .into_iter().filter(|x| x.1)
+        .map(|x| x.0)
+        .collect::<Vec<String>>();
+
+    let blacklist_str = blacklist.join(" ");
 
     let onsubmit: Callback<SubmitEvent> = {
-            let id_list_node = id_list_node.clone();    
+        let id_list_node = id_list_node.clone();
+        let depth_node = depth_node.clone();
+        let output_max_size_node = output_max_size_node.clone();
+        let on_receiving_response = props.on_receiving_response.clone();
+        let on_requesting_table = props.on_requesting_table.clone();
         Callback::from(move |event: SubmitEvent| {
+            on_requesting_table.emit(());
+
+            let on_receiving_response = on_receiving_response.clone();
             event.prevent_default();
-            let id_list = id_list_node.cast::<web_sys::HtmlInputElement>().unwrap().value();
-            web_sys::console::log_1(&id_list.to_string().into()); // if uncommented will print
+            let input_id_list = id_list_node.cast::<web_sys::HtmlInputElement>().unwrap().value()
+                .split(' ')
+                .map(str::to_string)
+                .collect::<Vec<String>>();
+
+            let depth = depth_node.cast::<web_sys::HtmlInputElement>().unwrap().value().parse::<u8>().unwrap();
+
+            let output_max_size = output_max_size_node.cast::<web_sys::HtmlInputElement>().unwrap().value().parse::<usize>().unwrap();
+            let form_content = SnowballParameters {
+                output_max_size,
+                depth,
+                input_id_list
+            };
+            wasm_bindgen_futures::spawn_local(async move {
+                let response = get_response(&form_content).await;
+
+                format!("{response:#?}");
+
+                on_receiving_response.emit(response);
+            });
         })
     };
     html! {
@@ -109,13 +150,13 @@ fn SnowballForm(props: &FormProps) -> Html {
             <div class="mb-3 form-check">
                 <label for="idInput" class="form-label">{"Enter a PMID, a DOI or a Lens ID"}</label>
                 <input type="text" class="form-control" id="idInput" name="idListInput" ref={id_list_node.clone()}/>
-                <div id="idInputHelp" class="form-text">{"You can enter multiple references separated by commas."}</div>
+                <div id="idInputHelp" class="form-text">{"You can enter multiple references separated by spaces."}</div>
             </div>
             <div class="mb-3 form-check">
                 <div class="row">
                 <div class="col">
                     <label class="form-check-label" for="depthSelect">{"Select depth"}</label>
-                    <select class="form-select" aria-label="Default select example" id="depthSelect" value="2">
+                    <select class="form-select" aria-label="Default select example" id="depthSelect" value="2" ref={depth_node.clone()}>
                         <option value="1">{"1"}</option>
                         <option value="2" selected=true>{"2"}</option>
                         <option value="3">{"3"}</option>
@@ -124,7 +165,7 @@ fn SnowballForm(props: &FormProps) -> Html {
                 </div>
                 <div class="col">
                     <label class="form-check-label" for="maxOutputSizeSelect">{"Select output size"}</label>
-                    <select class="form-select" aria-label="Default select example" id="maxOutputSizeSelect" value="2">
+                    <select class="form-select" aria-label="Default select example" id="maxOutputSizeSelect" value="10" ref={output_max_size_node.clone()}>
                         <option value="10" selected=true>{"10"}</option>
                         <option value="50">{"50"}</option>
                         <option value="100">{"100"}</option>
@@ -153,6 +194,11 @@ fn SnowballForm(props: &FormProps) -> Html {
                 </div>
                 </div>
             </div>
+            <div class="mb-3 form-check">
+                <label for="blacklistInput" class="form-label">{"DOI blacklist"}</label>
+                <input type="text" class="form-control" id="blacklistInput" name="blacklistInput" value={blacklist_str}/>
+                <div id="blacklistInputHelp" class="form-text">{"You can enter multiple references separated by spaces."}</div>
+            </div>
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">{"Search for related articles"}</button>
             </div>
@@ -160,17 +206,6 @@ fn SnowballForm(props: &FormProps) -> Html {
     }
 }
 
-#[derive(Properties, PartialEq, Clone)]
-pub struct Props {
-    pub on_click: Callback<MouseEvent>,
-}
-
-#[function_component]
-fn HelloWorld(props: &Props) -> Html {
-    //props.on_name_entry.emit(String::from("Bob"));
-
-    html! { "Hello" }
-}
 
 
 fn main() {
