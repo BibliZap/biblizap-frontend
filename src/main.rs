@@ -18,34 +18,30 @@ mod form;
 use form::SnowballForm;
 
 mod common;
-use common::Error;
+use common::{Error, CurrentPage};
 
-enum CurrentPage {
-    BiblizapApp,
-    HowItWorks,
-    Contact,
-    LegalInformation
-}
+
 
 #[function_component(App)]
 fn app() -> Html {
-    let current_page = use_state(|| CurrentPage::HowItWorks);
-
+    let current_page = use_state(|| CurrentPage::BibliZapApp);
+    
     let content = match current_page.deref() {
-        CurrentPage::BiblizapApp => { html!{<BiblizapApp/>} },
+        CurrentPage::BibliZapApp => { html!{<BibliZapApp/>} },
         CurrentPage::HowItWorks => { html!{<HowItWorks/>} },
-        _ => { html!{<BiblizapApp/>} }
+        CurrentPage::LegalInformation => { html!{<LegalInformation/>} },
+        CurrentPage::Contact => { html!{<Contact/>} }
     };
     html! {
         <main>
-            <NavBar/>
+            <NavBar current_page={current_page}/>
             <Wall/>
             {content}
         </main>
     }
 }
 
-#[function_component(BiblizapApp)]
+#[function_component(BibliZapApp)]
 fn app() -> Html {
     let table_status = use_state(|| TableStatus::NotRequested);
     let on_receiving_response = { 

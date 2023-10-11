@@ -1,11 +1,47 @@
 use yew::prelude::*;
+use std::ops::Deref;
+
+use super::common::CurrentPage;
+
+
+#[derive(Clone, PartialEq, Properties)]
+pub struct NavBarProps {
+    pub current_page: UseStateHandle<CurrentPage>,
+}
 
 #[function_component]
-pub fn NavBar() -> Html {
+pub fn NavBar(props: &NavBarProps) -> Html {
+    let onclick_biblizap_app = {
+        let current_page = props.current_page.clone();
+        Callback::from(move |_: MouseEvent| {
+            current_page.set(CurrentPage::BibliZapApp);
+        })
+    };
+
+    let onclick_how_it_works = {
+        let current_page = props.current_page.clone();
+        Callback::from(move |_: MouseEvent| {
+            current_page.set(CurrentPage::HowItWorks);
+        })
+    };
+
+    let onclick_contact = {
+        let current_page = props.current_page.clone();
+        Callback::from(move |_: MouseEvent| {
+            current_page.set(CurrentPage::Contact);
+        })
+    };
+
+    let onclick_legal = {
+        let current_page = props.current_page.clone();
+        Callback::from(move |_: MouseEvent| {
+            current_page.set(CurrentPage::LegalInformation);
+        })
+    };
     html! {
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#" id="navbar-title">
+            <a class="navbar-brand" href="#" id="navbar-title" onclick={onclick_biblizap_app.clone()}>
                 <img src="/icons/biblizap-nosnowball-round-fill.svg" alt="" width="50" height="50" class="px-2"/>
                 {"BibliZap"}
             </a>
@@ -14,30 +50,42 @@ pub fn NavBar() -> Html {
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">
-                    <i class="bi bi-house-fill px-2"></i>
-                    {"Home"}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                    <i class="bi bi-lightbulb-fill px-2"></i>
-                    {"How it works"}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                    <i class="bi bi-send-fill px-2"></i>
-                    {"Contact"}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                    <i class="bi bi-info-circle-fill px-2"></i>
-                    {"Legal information"}
-                    </a>
-                </li>
+                    <li class="nav-item" onclick={onclick_biblizap_app}>
+                        <a class={match props.current_page.deref() {
+                            CurrentPage::BibliZapApp => {"nav-link active"},
+                            _ => {"nav-link"}
+                        }} aria-current="page" href="#">
+                        <i class="bi bi-house-fill px-2"></i>
+                        {"App"}
+                        </a>
+                    </li>
+                    <li class="nav-item" onclick={onclick_how_it_works}>
+                        <a class={match props.current_page.deref() {
+                            CurrentPage::HowItWorks => {"nav-link active"},
+                            _ => {"nav-link"}
+                        }} href="#">
+                        <i class="bi bi-lightbulb-fill px-2"></i>
+                        {"How it works"}
+                        </a>
+                    </li>
+                    <li class="nav-item" onclick={onclick_contact}>
+                        <a class={match props.current_page.deref() {
+                            CurrentPage::Contact => {"nav-link active"},
+                            _ => {"nav-link"}
+                        }}  href="#">
+                        <i class="bi bi-send-fill px-2"></i>
+                        {"Contact"}
+                        </a>
+                    </li>
+                    <li class="nav-item" onclick={onclick_legal}>
+                        <a class={match props.current_page.deref() {
+                            CurrentPage::LegalInformation => {"nav-link active"},
+                            _ => {"nav-link"}
+                        }}  href="#">
+                        <i class="bi bi-info-circle-fill px-2"></i>
+                        {"Legal information"}
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

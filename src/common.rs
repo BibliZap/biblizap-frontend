@@ -7,3 +7,11 @@ pub enum Error {
     #[error("Request error")]
     RequestError(#[from] gloo_net::Error),
 }
+
+#[derive(PartialEq)]
+pub enum CurrentPage {
+    BibliZapApp,
+    HowItWorks,
+    Contact,
+    LegalInformation
+}
