@@ -1,11 +1,10 @@
 use yew::prelude::*;
-use rand::rngs::mock::StepRng;
 use shuffle::shuffler::Shuffler;
 use shuffle::irs::Irs;
 
 #[function_component(LegalInformation)]
 pub fn legal_information() -> Html {
-    let mut rng = StepRng::new(2, 13);
+    let mut rng = rand::thread_rng();
     let mut irs = Irs::default();
     
     let mut creators = vec!["Bastien Le Guellec", "Raphaël Bentégeac", "Victor Leblanc"];
@@ -15,7 +14,7 @@ pub fn legal_information() -> Html {
 
     html! {
         <div class="container-md">
-            <h1 class="mb-4">{"Legal Information"}<i class="bi bi-info-circle-fill px-2"></i></h1>
+            <h1 class="mb-4"><i class="bi bi-info-circle-fill px-2"></i>{"Legal Information"}</h1>
             <h3>{"Disclaimer"}</h3>
             
             <p class="p-3">
@@ -117,7 +116,7 @@ pub fn contact() -> Html {
             <h3>{"Issues"}</h3>
             
             <p class="p-3">
-                {"Regarding issues you may go to "}<a href={"https://github.com/BibliZap/BibliZap"}></a>{"our github repo"}<br/>
+                {"Regarding issues you may go to "}<a href={"https://github.com/BibliZap/BibliZap"}>{"our github repo"}</a><br/>
                 {"Don't forget to search the existing issues for something similar."}<br/>
                 {"You may also ask for new features in that manner."}
             </p>

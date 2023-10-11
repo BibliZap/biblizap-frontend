@@ -11,7 +11,7 @@ use super::common::Error;
 pub struct FormProps {
     pub on_requesting_table: Callback<()>,
     pub on_receiving_response: Callback<Result<Vec<Article>, Error>>,
-    pub blacklist: UseStateHandle<Rc<RefCell<HashMap<String, bool>>>>
+    pub selected_articles: UseStateHandle<Rc<RefCell<HashMap<String, bool>>>>
 }
 
 #[derive(Clone, PartialEq, Properties, Debug, Default, Serialize, Deserialize)]
@@ -46,16 +46,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
     let depth_node = use_node_ref();
     let output_max_size_node = use_node_ref();
     let search_for_node = use_node_ref();
-    let blacklist = props.blacklist.clone()
-        .as_ref()
-        .borrow()
-        .clone()
-        .into_iter().filter(|x| x.1)
-        .map(|x| x.0)
-        .collect::<Vec<String>>();
-
-    let blacklist_str = blacklist.join(" ");
-
+    
     let onsubmit: Callback<SubmitEvent> = {
         let id_list_node = id_list_node.clone();
         let depth_node = depth_node.clone();
@@ -87,7 +78,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         })
     };
     html! {
-        <form class="container-md" onsubmit={onsubmit}>
+        <form class="container-md" onsubmit={onsubmit} style={"margin-bottom: 50px;"}>
             <div class="mb-3 form-check">
                 <label for="idInput" class="form-label">{"Enter a PMID, a DOI or a Lens ID"}</label>
                 <input type="text" class="form-control" id="idInput" name="idListInput" ref={id_list_node.clone()}/>
@@ -130,11 +121,6 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                     <option value="Citations">{"Citations"}</option>
                     <option value="References">{"References"}</option>
                 </select>
-            </div>
-            <div class="mb-3 form-check">
-                <label for="blacklistInput" class="form-label">{"DOI blacklist"}</label>
-                <input type="text" class="form-control" id="blacklistInput" name="blacklistInput" value={blacklist_str}/>
-                <div id="blacklistInputHelp" class="form-text">{"You can enter multiple references separated by spaces."}</div>
             </div>
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">{"Search for related articles"}</button>

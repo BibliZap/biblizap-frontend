@@ -48,7 +48,7 @@ fn app() -> Html {
         let table_status = table_status.clone();
         Callback::from(move |table: Result<Vec<Article>, Error>| {
             match table {
-                Ok(table) => table_status.set(TableStatus::Available(table)),
+                Ok(table) => table_status.set(TableStatus::Available(std::rc::Rc::new(table))),
                 Err(error) => table_status.set(TableStatus::RequestError(error.to_string())),
             };
         })
@@ -60,21 +60,21 @@ fn app() -> Html {
         })
     };
 
-    let blacklist = use_mut_ref(HashMap::<String, bool>::new);
-    let blacklist = use_state(|| blacklist);
+    let selected_articles = use_mut_ref(HashMap::<String, bool>::new);
+    let selected_articles = use_state(|| selected_articles);
 
-    let update_blacklist = {
-        let blacklist = blacklist.clone();
+    let update_selected = {
+        let selected_articles = selected_articles.clone();
         Callback::from(move |element : (String, bool)| {
-            let rc = blacklist.deref().to_owned();
+            let rc = selected_articles.deref().to_owned();
             rc.borrow_mut().insert(element.0, element.1);
-            blacklist.set(rc);
+            selected_articles.set(rc);
         })
     };
     html! {
         <main>
-            <SnowballForm {on_requesting_table} {on_receiving_response} {blacklist}/>
-            <TableContainer table_status={table_status.clone()} update_blacklist={update_blacklist}/>
+            <SnowballForm {on_requesting_table} {on_receiving_response} {selected_articles}/>
+            <TableContainer table_status={table_status.clone()} update_selected={update_selected}/>
         </main>
     }
 }

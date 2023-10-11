@@ -3,9 +3,17 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Json error")]
-    JsonError(#[from] serde_json::Error),
+    Json(#[from] serde_json::Error),
+    #[error("IO error")]
+    Io(#[from] std::io::Error),
     #[error("Request error")]
-    RequestError(#[from] gloo_net::Error),
+    Request(#[from] gloo_net::Error),
+    #[error("Csv error")]
+    Csv(#[from] csv::Error),
+    #[error("Csv into_inner error")]
+    CsvIntoInner(String),
+    #[error("JsValue error")]
+    JsValue(String)
 }
 
 #[derive(PartialEq)]

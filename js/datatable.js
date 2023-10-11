@@ -9,7 +9,7 @@ export function datatable_create(table_name) {
         .appendTo('#example thead');
     
     $('#example').DataTable({
-        order: [[6, 'desc']],
+        order: [[7, 'desc']],
         orderCellsTop: true,
         fixedHeader: true,
         initComplete: function () {
