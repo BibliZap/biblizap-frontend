@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::common::{self, SearchFor};
 
 use super::table::Article;
@@ -110,8 +110,8 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                 </div>
                 <div class="col">
                     <label class="form-check-label" for="maxOutputSizeSelect">{"Select output size"}</label>
-                    <select class="form-select" aria-label="Default select example" id="maxOutputSizeSelect" value="10" ref={output_max_size_node.clone()}>
-                        <option value="10" selected=true>{"10"}</option>
+                    <select class="form-select" aria-label="Default select example" id="maxOutputSizeSelect" value="20" ref={output_max_size_node.clone()}>
+                        <option value="20" selected=true>{"20"}</option>
                         <option value="50">{"50"}</option>
                         <option value="100">{"100"}</option>
                         <option value="200">{"200"}</option>
