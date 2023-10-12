@@ -18,11 +18,10 @@ pub fn Wall() -> Html {
         "Not selling NFTs",
         "Feedback is appreciated",
         "Don't get hit by the snowball",
-        "Snowballing from the Mont-Blanc"];
+        "Snowballing from the Mont-Blanc",
+        "Raphaël spent way to much time writing these quotes"];
     
-
-    let mut rng = rand::thread_rng();
-    let index = rng.gen_range(0..(possible_catchwords.len()-1));
+    let index = rand::thread_rng().gen_range(0..(possible_catchwords.len()-1));
 
     let catchword = possible_catchwords[index];
 

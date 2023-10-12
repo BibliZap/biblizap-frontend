@@ -23,3 +23,11 @@ pub enum CurrentPage {
     Contact,
     LegalInformation
 }
+
+#[derive(Clone, PartialEq, Default, Debug, serde::Serialize)]
+pub enum SearchFor {
+    References,
+    Citations,
+    #[default]
+    Both
+}

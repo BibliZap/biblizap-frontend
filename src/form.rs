@@ -4,6 +4,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use serde::{Deserialize, Serialize};
+use crate::common::{self, SearchFor};
+
 use super::table::Article;
 use super::common::Error;
 
@@ -14,14 +16,14 @@ pub struct FormProps {
     pub selected_articles: UseStateHandle<Rc<RefCell<HashMap<String, bool>>>>
 }
 
-#[derive(Clone, PartialEq, Properties, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Properties, Debug, Default, Serialize)]
 struct SnowballParameters {
     output_max_size: usize,
     depth: u8,
     input_id_list: Vec<String>,
+    search_for: common::SearchFor
 }
 
-//todo: handle errors properly
 async fn get_response(form_content: &SnowballParameters) -> Result<Vec<Article>, Error> {
     let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
         .header("Access-Control-Allow-Origin", "*")
@@ -51,6 +53,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         let id_list_node = id_list_node.clone();
         let depth_node = depth_node.clone();
         let output_max_size_node = output_max_size_node.clone();
+        let search_for_node = search_for_node.clone();
         let on_receiving_response = props.on_receiving_response.clone();
         let on_requesting_table = props.on_requesting_table.clone();
         Callback::from(move |event: SubmitEvent| {
@@ -66,10 +69,20 @@ pub fn SnowballForm(props: &FormProps) -> Html {
             let depth = depth_node.cast::<web_sys::HtmlInputElement>().unwrap().value().parse::<u8>().unwrap();
 
             let output_max_size = output_max_size_node.cast::<web_sys::HtmlInputElement>().unwrap().value().parse::<usize>().unwrap();
+            
+            let search_for = match search_for_node.cast::<web_sys::HtmlInputElement>().unwrap().value().as_str() {
+                "References" => SearchFor::References,
+                "Citations" => SearchFor::Citations,
+                "Both" => SearchFor::Both,
+                &_ => SearchFor::Both
+            };
+            
+            
             let form_content = SnowballParameters {
                 output_max_size,
                 depth,
-                input_id_list
+                input_id_list,
+                search_for
             };
             wasm_bindgen_futures::spawn_local(async move {
                 let response = get_response(&form_content).await;
@@ -116,7 +129,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
             </div>
             <div class="mb-3 form-check">
                 <label class="form-check-label" for="searchForSelect">{"Search direction"}</label>
-                <select class="form-select" aria-label="Default select example" id="searchForSelect" value="2" ref={search_for_node.clone()}>
+                <select class="form-select" aria-label="Default select example" id="searchForSelect" ref={search_for_node.clone()}>
                     <option value="Both" selected=true>{"Both"}</option>
                     <option value="Citations">{"Citations"}</option>
                     <option value="References">{"References"}</option>

@@ -10,14 +10,13 @@ export function datatable_create(table_name) {
     
     $('#example').DataTable({
         order: [[7, 'desc']],
+        "autoWidth": false,
         orderCellsTop: true,
-        fixedHeader: true,
         initComplete: function () {
             var api = this.api();
  
             // For each column
-            api
-                .columns()
+            api.columns()
                 .eq(0)
                 .each(function (colIdx) {
                     // Set the header cell to contain the input element
