@@ -20,8 +20,6 @@ use form::SnowballForm;
 mod common;
 use common::{Error, CurrentPage};
 
-
-
 #[function_component(App)]
 fn app() -> Html {
     let current_page = use_state(|| CurrentPage::BibliZapApp);

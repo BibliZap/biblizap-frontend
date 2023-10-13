@@ -49,19 +49,17 @@ pub fn table_container(props: &TableContainerProps) -> Html  {
         TableStatus::RequestError(msg) =>  { html! {<Error msg={msg.to_owned()}/>} }
     };
 
-    html! {
-        <div class="container-fluid">
-            {content}
-        </div>
-    }
+    content
 }
 
 #[function_component(Spinner)]
 pub fn spinner() -> Html {
     html! {
-        <div class="d-flex justify-content-center">
-            <div class="spinner-border" role="status" style="width: 5rem; height: 5rem; margin-bottom: 50px;">
-                <span class="visually-hidden">{"Loading..."}</span>
+        <div class="container-fluid">
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border" role="status" style="width: 5rem; height: 5rem; margin-bottom: 50px;">
+                    <span class="visually-hidden">{"Loading..."}</span>
+                </div>
             </div>
         </div>
     }
@@ -140,7 +138,7 @@ pub fn table(props: &TableProps) -> Html {
     };
     
     html! {
-        <div>
+        <div class="container-fluid">
             <table id="example" class="table" style="width:100%">
                 <thead>
                     <tr>
@@ -222,8 +220,10 @@ pub struct ErrorProps {
 #[function_component(Error)]
 pub fn error(props: &ErrorProps) -> Html {
     html! {
-        <div class="alert alert-danger" role="alert">
-            {props.msg.to_owned()}
+        <div class="container-fluid">
+            <div class="alert alert-danger" role="alert">
+                {props.msg.to_owned()}
+            </div>
         </div>
     }
 }
