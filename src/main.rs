@@ -1,6 +1,6 @@
 use yew::prelude::*;
-use std::collections::HashMap;
-use std::ops::Deref;
+use std::{ops::Deref, cell::RefCell};
+use std::rc::Rc;
 
 mod legal;
 use legal::*;
@@ -23,6 +23,11 @@ use common::{Error, CurrentPage};
 #[function_component(App)]
 fn app() -> Html {
     let current_page = use_state(|| CurrentPage::BibliZapApp);
+    let dark_mode = use_state(|| false);
+    match dark_mode.deref() {
+        true => gloo_utils::document_element().set_attribute("data-bs-theme", "dark").unwrap_or(()),
+        false => gloo_utils::document_element().set_attribute("data-bs-theme", "light").unwrap_or(())
+    }
     
     let content = match current_page.deref() {
         CurrentPage::BibliZapApp => { html!{<BibliZapApp/>} },
@@ -31,22 +36,22 @@ fn app() -> Html {
         CurrentPage::Contact => { html!{<Contact/>} }
     };
     html! {
-        <main>
-            <NavBar current_page={current_page}/>
+        <div>
+            <NavBar current_page={current_page} dark_mode={dark_mode}/>
             <Wall/>
             {content}
-        </main>
+        </div>
     }
-}
+}   
 
 #[function_component(BibliZapApp)]
 fn app() -> Html {
     let table_status = use_state(|| TableStatus::NotRequested);
     let on_receiving_response = { 
         let table_status = table_status.clone();
-        Callback::from(move |table: Result<Vec<Article>, Error>| {
+        Callback::from(move |table: Result<Rc<RefCell<Vec<Article>>>, Error>| {
             match table {
-                Ok(table) => table_status.set(TableStatus::Available(std::rc::Rc::new(table))),
+                Ok(table) => table_status.set(TableStatus::Available(table)),
                 Err(error) => table_status.set(TableStatus::RequestError(error.to_string())),
             };
         })
@@ -58,22 +63,11 @@ fn app() -> Html {
         })
     };
 
-    let selected_articles = use_mut_ref(HashMap::<String, bool>::new);
-    let selected_articles = use_state(|| selected_articles);
-
-    let update_selected = {
-        let selected_articles = selected_articles.clone();
-        Callback::from(move |element : (String, bool)| {
-            let rc = selected_articles.deref().to_owned();
-            rc.borrow_mut().insert(element.0, element.1);
-            selected_articles.set(rc);
-        })
-    };
     html! {
-        <main>
-            <SnowballForm {on_requesting_table} {on_receiving_response} {selected_articles}/>
-            <TableContainer table_status={table_status.clone()} update_selected={update_selected}/>
-        </main>
+        <div>
+            <SnowballForm {on_requesting_table} {on_receiving_response}/>
+            <TableContainer table_status={table_status.clone()}/>
+        </div>
     }
 }
 

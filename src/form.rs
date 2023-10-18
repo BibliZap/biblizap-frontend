@@ -1,19 +1,17 @@
 use yew::prelude::*;
-use std::collections::HashMap;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use serde::Serialize;
 use crate::common::{self, SearchFor};
 
-use super::table::Article;
+use super::table::article::Article;
 use super::common::Error;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct FormProps {
     pub on_requesting_table: Callback<()>,
-    pub on_receiving_response: Callback<Result<Vec<Article>, Error>>,
-    pub selected_articles: UseStateHandle<Rc<RefCell<HashMap<String, bool>>>>
+    pub on_receiving_response: Callback<Result<Rc<RefCell<Vec<Article>>>, Error>>,
 }
 
 #[derive(Clone, PartialEq, Properties, Debug, Default, Serialize)]
@@ -24,21 +22,25 @@ struct SnowballParameters {
     search_for: common::SearchFor
 }
 
-async fn get_response(form_content: &SnowballParameters) -> Result<Vec<Article>, Error> {
-    let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
+const CRATE_CONFIG: &str = include_str!("../example.json");
+
+async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Vec<Article>>>, Error> {
+    /*let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
         .header("Access-Control-Allow-Origin", "*")
         .body(serde_json::to_string(&form_content)?)?
         .send()
         .await?
         .text()
-        .await?;
+        .await?;*/
+
+    let response = CRATE_CONFIG;
 
     let value = serde_json::from_str::<serde_json::Value>(&response)?;
     let mut articles = serde_json::from_value::<Vec<Article>>(value)?;
 
-    articles.sort_by_key(|x| -x.score.unwrap());
+    articles.sort_by_key(|article| std::cmp::Reverse(article.score.unwrap()));
     
-    Ok(articles)
+    Ok(Rc::new(RefCell::new(articles)))
 }
 
 
@@ -57,10 +59,10 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         let on_receiving_response = props.on_receiving_response.clone();
         let on_requesting_table = props.on_requesting_table.clone();
         Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
             on_requesting_table.emit(());
 
             let on_receiving_response = on_receiving_response.clone();
-            event.prevent_default();
             let input_id_list = id_list_node.cast::<web_sys::HtmlInputElement>().unwrap().value()
                 .split(' ')
                 .map(str::to_string)
@@ -136,7 +138,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                 </select>
             </div>
             <div class="text-center">
-                <button type="submit" class="btn btn-primary">{"Search for related articles"}</button>
+                <button type="submit" class="btn btn-outline-secondary btn-lg">{"Search for related articles"}</button>
             </div>
         </form>
     }

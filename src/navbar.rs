@@ -7,6 +7,7 @@ use super::common::CurrentPage;
 #[derive(Clone, PartialEq, Properties)]
 pub struct NavBarProps {
     pub current_page: UseStateHandle<CurrentPage>,
+    pub dark_mode: UseStateHandle<bool>
 }
 
 #[function_component]
@@ -38,18 +39,26 @@ pub fn NavBar(props: &NavBarProps) -> Html {
             current_page.set(CurrentPage::LegalInformation);
         })
     };
+
+    let toggle_dark_mode = {
+        let dark_mode = props.dark_mode.clone();
+        Callback::from(move |_: MouseEvent| {
+            dark_mode.set(!dark_mode.deref());
+        })
+    };
+
     html! {
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#" id="navbar-title" onclick={onclick_biblizap_app.clone()}>
+            <a class="navbar-brand" href="#" onclick={onclick_biblizap_app.clone()}>
                 <img src="/icons/biblizap-nosnowball-round-fill.svg" alt="" width="50" height="50" class="px-2"/>
                 {"BibliZap"}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <div class="">
+                <ul class="navbar-nav navbar-expand-lg">
                     <li class="nav-item" onclick={onclick_biblizap_app}>
                         <a class={match props.current_page.deref() {
                             CurrentPage::BibliZapApp => {"nav-link active"},
@@ -85,6 +94,15 @@ pub fn NavBar(props: &NavBarProps) -> Html {
                         <i class="bi bi-info-circle-fill px-2"></i>
                         {"Legal information"}
                         </a>
+                    </li>
+                    <li class="nav-item float-end" onclick={toggle_dark_mode}>
+                        <button class="nav-link active">
+                        if *props.dark_mode.deref() {
+                            <i class="bi bi-sun-fill px-2"></i>
+                        } else {
+                            <i class="bi bi-moon-fill px-2"></i>
+                        }
+                        </button>
                     </li>
                 </ul>
             </div>
