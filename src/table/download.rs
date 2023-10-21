@@ -1,5 +1,6 @@
 use web_sys::HtmlElement;
 use wasm_bindgen::prelude::*;
+use yew::prelude::*;
 
 use crate::common;
 use crate::table::Article;
@@ -43,4 +44,19 @@ pub fn download_bytes_as_file(bytes: &[u8], filename: &str) -> Result<(), common
     }?;
 
     Ok(())
+}
+
+
+#[derive(Clone, PartialEq, Properties)]
+pub struct ButtonProps {
+    pub onclick: Callback<MouseEvent>
+}
+
+#[function_component(DownloadButton)]
+pub fn download_button(props: &ButtonProps) -> Html {
+    html! {
+        <div>
+            <button class="btn btn-outline-secondary btn-lg mb-10" onclick={props.onclick.clone()}><i class="bi bi-download me-2"></i>{"Download articles"}</button>
+        </div>
+    }
 }

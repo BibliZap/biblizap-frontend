@@ -1,5 +1,6 @@
-use yew::prelude::*;
 use std::ops::Deref;
+
+use yew::prelude::*;
 use web_sys::HtmlElement;
 
 #[derive(Clone, PartialEq, Properties)]

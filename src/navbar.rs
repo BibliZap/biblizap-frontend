@@ -1,8 +1,8 @@
-use yew::prelude::*;
 use std::ops::Deref;
 
-use super::common::CurrentPage;
+use yew::prelude::*;
 
+use crate::common::CurrentPage;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct NavBarProps {

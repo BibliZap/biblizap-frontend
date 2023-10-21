@@ -173,8 +173,6 @@ struct HeaderCellSearchProps {
     redraw_table: Callback<()>,
 }
 
-
-
 use paste::paste;
 macro_rules! header_cell {
     ($field:ident) => {
@@ -302,20 +300,6 @@ pub fn row(props: &RowProps) -> Html {
             <td>{props.article.citations.unwrap_or_default()}</td>
             <td>{props.article.score.unwrap_or_default()}</td>
         </tr>
-    }
-}
-
-#[derive(Clone, PartialEq, Properties)]
-pub struct ButtonProps {
-    onclick: Callback<MouseEvent>
-}
-
-#[function_component(DownloadButton)]
-pub fn download_button(props: &ButtonProps) -> Html {
-    html! {
-        <div>
-            <button class="btn btn-outline-secondary btn-lg mb-10" onclick={props.onclick.clone()}><i class="bi bi-download me-2"></i>{"Download articles"}</button>
-        </div>
     }
 }
 

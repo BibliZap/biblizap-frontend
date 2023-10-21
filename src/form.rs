@@ -1,12 +1,13 @@
-use yew::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use serde::Serialize;
+use yew::prelude::*;
+
 use crate::common::{self, SearchFor, get_value};
 
-use super::table::article::Article;
-use super::common::Error;
+use crate::table::article::Article;
+use crate::common::*;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct FormProps {
@@ -21,6 +22,12 @@ struct SnowballParameters {
     input_id_list: Vec<String>,
     search_for: common::SearchFor
 }
+
+/*impl SnowballParameters {
+    fn from_nodes() -> Result<SnowballParameters, common::Error> {
+
+    }
+}*/
 
 //const CRATE_CONFIG: &str = include_str!("../example.json");
 
@@ -41,7 +48,6 @@ async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Ve
     Ok(Rc::new(RefCell::new(articles)))
 }
 
-
 #[function_component]
 pub fn SnowballForm(props: &FormProps) -> Html {
     let id_list_node = use_node_ref();
@@ -59,14 +65,13 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             on_requesting_table.emit(());
-
-            let on_receiving_response = on_receiving_response.clone();
+            
             let input_id_list = get_value(&id_list_node).unwrap()
                 .split(' ')
                 .map(str::to_string)
                 .collect::<Vec<String>>();
 
-            let depth = common::get_value(&depth_node).unwrap().parse::<u8>().unwrap();
+            let depth = get_value(&depth_node).unwrap().parse::<u8>().unwrap();
 
             let output_max_size = get_value(&output_max_size_node).unwrap().parse::<usize>().unwrap();
             
@@ -84,6 +89,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                 search_for
             };
             
+            let on_receiving_response = on_receiving_response.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 let response = get_response(&form_content).await;
                 on_receiving_response.emit(response);

@@ -1,6 +1,7 @@
-use yew::prelude::*;
 use std::{ops::Deref, cell::RefCell};
 use std::rc::Rc;
+
+use yew::prelude::*;
 
 mod legal;
 use legal::*;

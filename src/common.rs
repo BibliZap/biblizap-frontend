@@ -3,13 +3,13 @@ use yew::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Json error")]
+    #[error(transparent)]
     Json(#[from] serde_json::Error),
-    #[error("IO error")]
+    #[error(transparent)]
     Io(#[from] std::io::Error),
-    #[error("Request error")]
+    #[error(transparent)]
     Request(#[from] gloo_net::Error),
-    #[error("Csv error")]
+    #[error(transparent)]
     Csv(#[from] csv::Error),
     #[error("Csv into_inner error")]
     CsvIntoInner(String),
