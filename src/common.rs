@@ -1,4 +1,5 @@
 use thiserror::Error;
+use yew::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -31,3 +32,8 @@ pub enum SearchFor {
     #[default]
     Both
 }
+
+pub fn get_value(node_ref: &NodeRef) -> Option<String> {
+    Some(node_ref.cast::<web_sys::HtmlInputElement>()?.value())
+}
+

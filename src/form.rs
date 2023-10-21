@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use serde::Serialize;
-use crate::common::{self, SearchFor};
+use crate::common::{self, SearchFor, get_value};
 
 use super::table::article::Article;
 use super::common::Error;
@@ -22,23 +22,21 @@ struct SnowballParameters {
     search_for: common::SearchFor
 }
 
-const CRATE_CONFIG: &str = include_str!("../example.json");
+//const CRATE_CONFIG: &str = include_str!("../example.json");
 
 async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Vec<Article>>>, Error> {
-    /*let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
+    let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
         .header("Access-Control-Allow-Origin", "*")
         .body(serde_json::to_string(&form_content)?)?
         .send()
         .await?
         .text()
-        .await?;*/
-
-    let response = CRATE_CONFIG;
+        .await?;
 
     let value = serde_json::from_str::<serde_json::Value>(&response)?;
     let mut articles = serde_json::from_value::<Vec<Article>>(value)?;
 
-    articles.sort_by_key(|article| std::cmp::Reverse(article.score.unwrap()));
+    articles.sort_by_key(|article| std::cmp::Reverse(article.score.unwrap_or_default()));
     
     Ok(Rc::new(RefCell::new(articles)))
 }
@@ -63,22 +61,21 @@ pub fn SnowballForm(props: &FormProps) -> Html {
             on_requesting_table.emit(());
 
             let on_receiving_response = on_receiving_response.clone();
-            let input_id_list = id_list_node.cast::<web_sys::HtmlInputElement>().unwrap().value()
+            let input_id_list = get_value(&id_list_node).unwrap()
                 .split(' ')
                 .map(str::to_string)
                 .collect::<Vec<String>>();
 
-            let depth = depth_node.cast::<web_sys::HtmlInputElement>().unwrap().value().parse::<u8>().unwrap();
+            let depth = common::get_value(&depth_node).unwrap().parse::<u8>().unwrap();
 
-            let output_max_size = output_max_size_node.cast::<web_sys::HtmlInputElement>().unwrap().value().parse::<usize>().unwrap();
+            let output_max_size = get_value(&output_max_size_node).unwrap().parse::<usize>().unwrap();
             
-            let search_for = match search_for_node.cast::<web_sys::HtmlInputElement>().unwrap().value().as_str() {
+            let search_for = match get_value(&search_for_node).unwrap().as_str() {
                 "References" => SearchFor::References,
                 "Citations" => SearchFor::Citations,
                 "Both" => SearchFor::Both,
                 &_ => SearchFor::Both
             };
-            
             
             let form_content = SnowballParameters {
                 output_max_size,
@@ -86,6 +83,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                 input_id_list,
                 search_for
             };
+            
             wasm_bindgen_futures::spawn_local(async move {
                 let response = get_response(&form_content).await;
                 on_receiving_response.emit(response);

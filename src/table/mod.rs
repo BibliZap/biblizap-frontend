@@ -7,6 +7,9 @@ use yew::prelude::*;
 pub mod article;
 pub use article::Article;
 
+mod filter;
+use filter::Filters;
+
 mod footer;
 use footer::TableFooter;
 
@@ -75,15 +78,19 @@ pub fn table(props: &TableProps) -> Html {
     };
 
     let articles = props.articles.to_owned();
-    let global_search = use_state(|| "".to_string());
+    let global_filter = use_state(|| "".to_string());
+    let global_filter_regex = regex::Regex::new(&global_filter).unwrap_or(regex::Regex::new("").unwrap());
 
-    let r = regex::Regex::new(&global_search).unwrap_or(regex::Regex::new("").unwrap());
+    let filters = use_mut_ref(Filters::default);
+    let filters = use_state(|| filters);
+    
     
     let articles_to_display = articles
         .deref()
         .borrow()
         .iter()
-        .filter(|a| a.matches(&r))
+        .filter(|a| a.matches_global(&global_filter_regex))
+        .filter(|a| a.matches(&filters.deref().borrow()))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -106,32 +113,43 @@ pub fn table(props: &TableProps) -> Html {
     let last_article = (first_article as i32 + article_per_page.deref()).clamp(0, articles_to_display.len() as i32) as usize;
     let articles_slice = &articles_to_display[first_article..last_article];
 
-    let dummy_state = use_state(|| ());
-    let update_table = {
+    let trigger_update = use_force_update();
+    let redraw_table = {
         Callback::from(move |_: ()| {
-            dummy_state.set(());
+            trigger_update.force_update();
         })
     };
     
     html! {
         <div class="container-fluid">
             <hr/>
-            <TableGlobalSearch filter={global_search.clone()}/>
-            <p>{global_search.clone().to_string()}</p>
-            <table class="table table-hover table-bordered">
+            <TableGlobalSearch filter={global_filter.clone()}/>
+            <table class="table table-hover table-bordered" style="table-layout:fixed">
+                <thead>
+                    <tr>
+                        <th style="width:2%"></th>
+                        <HeaderCellDoi articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
+                        <HeaderCellTitle articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:20%"/>
+                        <HeaderCellFirstAuthor articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
+                        <HeaderCellSummary articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:50%"/>
+                        <HeaderCellYearPublished articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
+                        <HeaderCellCitations articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
+                        <HeaderCellScore articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
+                    </tr>
+                </thead>
                 <thead>
                     <tr>
                         <th></th>
-                        <HeaderCell articles={articles.clone()} name="Doi" update_table={update_table.clone()}/>
-                        <HeaderCell articles={articles.clone()} name="Title" update_table={update_table.clone()}/>
-                        <HeaderCell articles={articles.clone()} name="First author" update_table={update_table.clone()}/>
-                        <HeaderCell articles={articles.clone()} name="Abstract" update_table={update_table.clone()}/>
-                        <HeaderCell articles={articles.clone()} name="Year published" update_table={update_table.clone()}/>
-                        <HeaderCell articles={articles.clone()} name="Citations" update_table={update_table.clone()}/>
-                        <HeaderCell articles={articles.clone()} name="Score" update_table={update_table.clone()}/>
+                        <HeaderCellSearchDoi filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchTitle filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchFirstAuthor filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchSummary filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchYearPublished filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchCitations filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchScore filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-group-divider">
                     { articles_slice.iter().map(|article| html!{<Row article={article.clone()} update_selected={update_selected.clone()}/>} ).collect::<Html>() }
                 </tbody>
             </table>
@@ -143,28 +161,85 @@ pub fn table(props: &TableProps) -> Html {
 
 
 #[derive(Clone, PartialEq, Properties)]
-pub struct HeaderCellProps {
-    name: AttrValue,
+struct HeaderCellProps {
     articles: Rc<RefCell<Vec<Article>>>,
-    update_table: Callback<()>
+    redraw_table: Callback<()>,
+    style: AttrValue,
 }
 
-#[function_component(HeaderCell)]
-fn header_cell(props: &HeaderCellProps) -> Html {
-    let sort = {
-        let articles = props.articles.clone();
-        let name = props.name.clone();
-        let update_table = props.update_table.clone();
-        Callback::from(move |_: MouseEvent| {
-            let mut ref_vec = articles.deref().borrow_mut();
-            ref_vec.deref_mut().sort_by_key(|a| std::cmp::Reverse(a.get(&name).unwrap_or_default()));
-            update_table.emit(());
-        })
-    };
-    html! {
-        <th><button class="btn col-12 text-start" onclick={sort}><strong>{&props.name}</strong><i class="bi bi-sort-down float-end"></i></button></th>
+#[derive(Clone, PartialEq, Properties)]
+struct HeaderCellSearchProps {
+    filters: UseStateHandle<Rc<RefCell<Filters>>>,
+    redraw_table: Callback<()>,
+}
+
+
+
+use paste::paste;
+macro_rules! header_cell {
+    ($field:ident) => {
+        paste! {
+            #[function_component]
+            fn [<HeaderCell $field:camel>](props: &HeaderCellProps) -> Html {
+                let sort_reverse = {
+                    let articles = props.articles.clone();
+                    let redraw_table = props.redraw_table.clone();
+                    Callback::from(move |_: MouseEvent| {
+                        let mut ref_vec = articles.deref().borrow_mut();
+                        ref_vec.deref_mut().sort_by_key(|a| std::cmp::Reverse(a.$field.clone().unwrap_or_default()));
+                        redraw_table.emit(());
+                    })
+                };
+                let sort = {
+                    let articles = props.articles.clone();
+                    let redraw_table = props.redraw_table.clone();
+                    Callback::from(move |_: MouseEvent| {
+                        let mut ref_vec = articles.deref().borrow_mut();
+                        ref_vec.deref_mut().sort_by_key(|a| a.$field.clone().unwrap_or_default());
+                        redraw_table.emit(());
+                    })
+                };
+
+                html! {
+                    <th class="text-start hover-overlay" style={props.style.clone()}>
+                        <div class="row"><strong>{inflections::case::to_title_case(&stringify!{[<$field:snake>]})}</strong></div>
+                        <button class="btn btn-outline-secondary col" onclick={sort_reverse}><i class="bi bi-sort-up"></i></button>
+                        <button class="btn btn-outline-secondary col" onclick={sort}><i class="bi bi-sort-down"></i></button>
+                        
+                    </th>
+                }
+            }
+
+            #[function_component]
+            fn [<HeaderCellSearch $field:camel>](props: &HeaderCellSearchProps) -> Html {
+                let input_node_ref = use_node_ref();
+                let oninput = {
+                    let filters = props.filters.clone();
+                    let input_node_ref = input_node_ref.clone();
+                    let redraw_table = props.redraw_table.clone();
+                    Callback::from(move |_: InputEvent| {
+                        let rc = filters.deref().to_owned();
+                        let value = input_node_ref.cast::<web_sys::HtmlInputElement>().unwrap().value();
+                        rc.deref().borrow_mut().$field = value.as_str().into();
+                        redraw_table.emit(())
+                    })
+                };
+            
+                html! {
+                    <th><div class="form-check ps-0"><input type="text" class="form-control" oninput={oninput} ref={input_node_ref}/></div></th>
+                }
+            }
+        }
     }
 }
+
+header_cell!(doi);
+header_cell!(title);
+header_cell!(summary);
+header_cell!(citations);
+header_cell!(first_author);
+header_cell!(year_published);
+header_cell!(score);
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct TableGlobalSearchProps {
@@ -172,7 +247,7 @@ pub struct TableGlobalSearchProps {
 }
 
 #[function_component(TableGlobalSearch)]
-fn table_global_search(props: &TableGlobalSearchProps) -> Html {
+fn table_global_filter(props: &TableGlobalSearchProps) -> Html {
     let input_node_ref = use_node_ref();
     let oninput = {
         let filter = props.filter.clone();
@@ -219,7 +294,7 @@ pub fn row(props: &RowProps) -> Html {
     html! {
         <tr>
             <td><input type={"checkbox"} class={"row-checkbox"} onchange={onchange}/></td>
-            <td><a href={doi_link(props.article.doi.clone())}>{props.article.doi.clone().unwrap_or_default()}</a></td>
+            <td style=""><a href={doi_link(props.article.doi.clone())} style="word-wrap: break-word">{props.article.doi.clone().unwrap_or_default()}</a></td>
             <td>{props.article.title.clone().unwrap_or_default()}</td>
             <td>{props.article.first_author.clone().unwrap_or_default()}</td>
             <td>{props.article.summary.clone().unwrap_or_default()}</td>

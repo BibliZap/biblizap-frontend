@@ -1,6 +1,5 @@
-use web_sys::{HtmlElement, Blob};
+use web_sys::HtmlElement;
 use wasm_bindgen::prelude::*;
-
 
 use crate::common;
 use crate::table::Article;
@@ -22,16 +21,8 @@ pub fn to_csv(articles: &[Article]) -> Result<Vec<u8>, common::Error> {
 
 pub fn download_bytes_as_file(bytes: &[u8], filename: &str) -> Result<(), common::Error> {
     use gloo_utils::document;
-
-    let uint8arr = js_sys::Uint8Array::new(&unsafe { js_sys::Uint8Array::view(bytes) }.into()); 
-    let array = js_sys::Array::new();
-    array.push(&uint8arr.buffer());
-
-    let blob = Blob::new_with_u8_array_sequence_and_options(
-                &array,
-                web_sys::BlobPropertyBag::new().type_("text/csv"),
-            ).unwrap();
-    let download_url = web_sys::Url::create_object_url_with_blob(&blob).unwrap();
+    let blob= gloo_file::Blob::new(bytes);
+    let download_url = web_sys::Url::create_object_url_with_blob(&blob.into()).unwrap();
 
     let a: HtmlElement = document().create_element("a").unwrap().dyn_into().unwrap();
     
