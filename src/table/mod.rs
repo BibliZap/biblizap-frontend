@@ -129,7 +129,8 @@ pub fn table(props: &TableProps) -> Html {
                     <tr>
                         <th style="width:2%"></th>
                         <HeaderCellDoi articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
-                        <HeaderCellTitle articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:20%"/>
+                        <HeaderCellTitle articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:15%"/>
+                        <HeaderCellPublisher articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
                         <HeaderCellFirstAuthor articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
                         <HeaderCellSummary articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:50%"/>
                         <HeaderCellYearPublished articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
@@ -142,6 +143,7 @@ pub fn table(props: &TableProps) -> Html {
                         <th></th>
                         <HeaderCellSearchDoi filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchTitle filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchPublisher filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchFirstAuthor filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchSummary filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchYearPublished filters={filters.clone()} redraw_table={redraw_table.clone()}/>
@@ -234,6 +236,7 @@ macro_rules! header_cell {
 header_cell!(doi);
 header_cell!(title);
 header_cell!(summary);
+header_cell!(publisher);
 header_cell!(citations);
 header_cell!(first_author);
 header_cell!(year_published);
@@ -293,7 +296,8 @@ pub fn row(props: &RowProps) -> Html {
         <tr>
             <td><input type={"checkbox"} class={"row-checkbox"} onchange={onchange}/></td>
             <td style=""><a href={doi_link(props.article.doi.clone())} style="word-wrap: break-word">{props.article.doi.clone().unwrap_or_default()}</a></td>
-            <td>{props.article.title.clone().unwrap_or_default()}</td>
+            <td style="word-wrap: break-word">{props.article.title.clone().unwrap_or_default()}</td>
+            <td style="word-wrap: break-word">{props.article.publisher.clone().unwrap_or_default()}</td>
             <td>{props.article.first_author.clone().unwrap_or_default()}</td>
             <td>{props.article.summary.clone().unwrap_or_default()}</td>
             <td>{props.article.year_published.unwrap_or_default()}</td>
