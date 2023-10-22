@@ -57,7 +57,7 @@ pub fn NavBar(props: &NavBarProps) -> Html {
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="">
+            <div id="navbarSupportedContent" class="collapse navbar-collapse">
                 <ul class="navbar-nav navbar-expand-lg">
                     <li class="nav-item" onclick={onclick_biblizap_app}>
                         <a class={match props.current_page.deref() {
