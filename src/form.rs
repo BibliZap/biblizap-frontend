@@ -32,7 +32,14 @@ struct SnowballParameters {
 //const CRATE_CONFIG: &str = include_str!("../example.json");
 
 async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Vec<Article>>>, Error> {
-    let response = gloo_net::http::Request::post("http://127.0.0.1:8080/api")
+    use gloo_utils::document;
+    let url = document().document_uri();
+    let url = match url {
+        Ok(href) => Ok(href),
+        Err(err) => Err(Error::JsValue(err.as_string().unwrap_or_default()))
+    }?;
+
+    let response = gloo_net::http::Request::post(&format!("{}api", url))
         .header("Access-Control-Allow-Origin", "*")
         .body(serde_json::to_string(&form_content)?)?
         .send()
