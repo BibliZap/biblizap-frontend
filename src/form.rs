@@ -37,7 +37,7 @@ async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Ve
     let url = match url {
         Ok(href) => Ok(href),
         Err(err) => Err(Error::JsValue(err.as_string().unwrap_or_default()))
-    }?;
+    }?.replace('#', "");
 
     let response = gloo_net::http::Request::post(&format!("{}api", url))
         .header("Access-Control-Allow-Origin", "*")
