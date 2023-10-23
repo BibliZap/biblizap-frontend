@@ -132,8 +132,8 @@ pub fn table(props: &TableProps) -> Html {
                         <HeaderCellTitle articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:15%"/>
                         <HeaderCellJournal articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
                         <HeaderCellFirstAuthor articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
-                        <HeaderCellSummary articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:50%"/>
                         <HeaderCellYearPublished articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
+                        <HeaderCellSummary articles={articles.clone()} redraw_table={redraw_table.clone()} style="width:50%"/>
                         <HeaderCellCitations articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
                         <HeaderCellScore articles={articles.clone()} redraw_table={redraw_table.clone()} style=""/>
                     </tr>
@@ -145,8 +145,8 @@ pub fn table(props: &TableProps) -> Html {
                         <HeaderCellSearchTitle filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchJournal filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchFirstAuthor filters={filters.clone()} redraw_table={redraw_table.clone()}/>
-                        <HeaderCellSearchSummary filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchYearPublished filters={filters.clone()} redraw_table={redraw_table.clone()}/>
+                        <HeaderCellSearchSummary filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchCitations filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                         <HeaderCellSearchScore filters={filters.clone()} redraw_table={redraw_table.clone()}/>
                     </tr>
@@ -299,8 +299,8 @@ pub fn row(props: &RowProps) -> Html {
             <td style="word-wrap: break-word">{props.article.title.clone().unwrap_or_default()}</td>
             <td style="word-wrap: break-word">{props.article.journal.clone().unwrap_or_default()}</td>
             <td>{props.article.first_author.clone().unwrap_or_default()}</td>
-            <td>{props.article.summary.clone().unwrap_or_default()}</td>
             <td>{props.article.year_published.unwrap_or_default()}</td>
+            <td>{props.article.summary.clone().unwrap_or_default()}</td>
             <td>{props.article.citations.unwrap_or_default()}</td>
             <td>{props.article.score.unwrap_or_default()}</td>
         </tr>
