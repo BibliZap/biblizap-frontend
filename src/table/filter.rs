@@ -28,7 +28,7 @@ pub struct Filters {
     pub first_author: RegexWrapper,
     pub year_published: RegexWrapper,
     pub title: RegexWrapper,
-    pub publisher: RegexWrapper,
+    pub journal: RegexWrapper,
     pub summary: RegexWrapper,
     pub doi: RegexWrapper,
     pub citations: RegexWrapper,
