@@ -73,7 +73,9 @@ pub fn SnowballForm(props: &FormProps) -> Html {
             event.prevent_default();
             on_requesting_table.emit(());
             
+
             let input_id_list = get_value(&id_list_node).unwrap()
+                .trim()
                 .split(' ')
                 .map(str::to_string)
                 .collect::<Vec<String>>();
