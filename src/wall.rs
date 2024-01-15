@@ -5,23 +5,17 @@ use rand::Rng;
 pub fn Wall() -> Html {
     let possible_catchwords =
         ["The reference of my reference is my reference",
-        "Please cite us",
-        "Empowering citation bias",
+        "Cite us !",
         "Open-source",
         "Fork us on github",
-        "We might need a real UI designer",
-        "Probably not the next Google",
         "Created by Bastien, Raphaël and Victor",
-        "Not illegal !",
         "Doesn't make coffee",
-        "Empowered by the Lens",
-        "Not selling NFTs",
+        "Powered by the Lens",
         "Feedback is appreciated",
         "Don't get hit by the snowball",
-        "Snowballing from the Mont-Blanc",
-        "Raphaël spent way to much time writing these quotes"];
+        "Snowballing from the Mont-Blanc"];
     
-    let index = rand::thread_rng().gen_range(0..(possible_catchwords.len()-1));
+    let index = rand::thread_rng().gen_range(0..(possible_catchwords.len()));
 
     let catchword = possible_catchwords[index];
 
