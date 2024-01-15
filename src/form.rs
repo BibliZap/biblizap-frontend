@@ -119,24 +119,14 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                     <select class="form-select" aria-label="Default select example" id="depthSelect" value="2" ref={depth_node.clone()}>
                         <option value="1">{"1"}</option>
                         <option value="2" selected=true>{"2"}</option>
-                        <option value="3">{"3"}</option>
                     </select>
                     <div id="depthSelectHelp" class="form-text">{"The recommended depth value is 2"}</div>
                 </div>
                 <div class="col">
-                    <label class="form-check-label" for="maxOutputSizeSelect">{"Select output size"}</label>
-                    <select class="form-select" aria-label="Default select example" id="maxOutputSizeSelect" value="20" ref={output_max_size_node.clone()}>
-                        <option value="20" selected=true>{"20"}</option>
-                        <option value="50">{"50"}</option>
-                        <option value="100">{"100"}</option>
-                        <option value="200">{"200"}</option>
-                        <option value="300">{"300"}</option>
-                        <option value="400">{"400"}</option>
+                    <label class="form-check-label" for="maxOutputSizeSelect">{"Number of results"}</label>
+                    <select class="form-select" aria-label="Default select example" id="maxOutputSizeSelect" value="100" ref={output_max_size_node.clone()}>
+                        <option value="100" selected=true>{"100"}</option>
                         <option value="500">{"500"}</option>
-                        <option value="600">{"600"}</option>
-                        <option value="700">{"700"}</option>
-                        <option value="800">{"800"}</option>
-                        <option value="900">{"900"}</option>
                         <option value="1000">{"1000"}</option>
                     </select>
                 </div>
@@ -149,6 +139,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
                     <option value="Citations">{"Citations"}</option>
                     <option value="References">{"References"}</option>
                 </select>
+                <div id="searchForSelectHelp" class="form-text">{"For most cases, we recommend Both"}</div>
             </div>
             <div class="text-center">
                 <button type="submit" class="btn btn-outline-secondary btn-lg">{"Search for related articles"}</button>
