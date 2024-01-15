@@ -23,14 +23,6 @@ struct SnowballParameters {
     search_for: common::SearchFor
 }
 
-/*impl SnowballParameters {
-    fn from_nodes() -> Result<SnowballParameters, common::Error> {
-
-    }
-}*/
-
-//const CRATE_CONFIG: &str = include_str!("../example.json");
-
 async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Vec<Article>>>, Error> {
     use gloo_utils::document;
     let url = document().document_uri();
