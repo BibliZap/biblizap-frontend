@@ -11,6 +11,8 @@ pub enum Error {
     Request(#[from] gloo_net::Error),
     #[error(transparent)]
     Csv(#[from] csv::Error),
+    #[error(transparent)]
+    Xlsx(#[from] rust_xlsxwriter::XlsxError),
     #[error("Csv into_inner error")]
     CsvIntoInner(String),
     #[error("JsValue error")]

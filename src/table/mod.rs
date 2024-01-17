@@ -97,10 +97,10 @@ pub fn table(props: &TableProps) -> Html {
     let on_download_click = {
         let articles = articles.clone();
         Callback::from(move |_: MouseEvent| {
-            let bytes = to_csv(articles.deref().borrow().deref()).unwrap();
+            let bytes = to_excel(articles.deref().borrow().deref()).unwrap();
             let timestamp = chrono::Local::now().to_rfc3339();
 
-            match download_bytes_as_file(&bytes, &format!("BibliZap-{timestamp}.csv")) {
+            match download_bytes_as_file(&bytes, &format!("BibliZap-{timestamp}.xlsx")) {
                 Ok(_) => (),
                 Err(error) => {gloo_console::log!(format!("{error}"));}
             }
