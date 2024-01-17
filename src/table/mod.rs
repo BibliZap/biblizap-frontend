@@ -98,8 +98,9 @@ pub fn table(props: &TableProps) -> Html {
         let articles = articles.clone();
         Callback::from(move |_: MouseEvent| {
             let bytes = to_csv(articles.deref().borrow().deref()).unwrap();
+            let timestamp = chrono::Local::now().to_rfc3339();
 
-            match download_bytes_as_file(&bytes, "out.csv") {
+            match download_bytes_as_file(&bytes, &format!("BibliZap-{timestamp}.csv")) {
                 Ok(_) => (),
                 Err(error) => {gloo_console::log!(format!("{error}"));}
             }
