@@ -64,9 +64,16 @@ fn app() -> Html {
         })
     };
 
+    let on_submit_error= {
+        let table_status = table_status.clone();
+        Callback::from(move |error: common::Error| {
+            table_status.set(TableStatus::RequestError(error.to_string()))
+        })
+    };
+
     html! {
         <div>
-            <SnowballForm {on_requesting_table} {on_receiving_response}/>
+            <SnowballForm {on_submit_error} {on_requesting_table} {on_receiving_response}/>
             <TableContainer table_status={table_status.clone()}/>
         </div>
     }

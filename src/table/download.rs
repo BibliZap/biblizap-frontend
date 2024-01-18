@@ -45,7 +45,7 @@ pub fn to_excel(articles: &[Article]) -> Result<Vec<u8>, common::Error> {
     
 
     for (i, article) in articles.iter().enumerate() {
-        let i : u32 = i.try_into().unwrap();
+        let i : u32 = i.try_into()?;
 
         worksheet.write_string(i + 1, 0, article.doi.clone().unwrap_or_default())?;
         worksheet.write_string(i + 1, 1, article.title.clone().unwrap_or_default())?;
@@ -62,7 +62,7 @@ pub fn to_excel(articles: &[Article]) -> Result<Vec<u8>, common::Error> {
     worksheet.set_column_width(1, 52)?;
     worksheet.set_column_width(2, 52)?;
     worksheet.set_column_width(4, 52)?;
-    worksheet.autofilter(0, 0, articles.len().try_into().unwrap(), 6)?;
+    worksheet.autofilter(0, 0, articles.len().try_into()?, 6)?;
     
 
     let buf = workbook.save_to_buffer()?;
@@ -72,26 +72,17 @@ pub fn to_excel(articles: &[Article]) -> Result<Vec<u8>, common::Error> {
 
 pub fn download_bytes_as_file(bytes: &[u8], filename: &str) -> Result<(), common::Error> {
     use gloo_utils::document;
-    let blob= gloo_file::Blob::new(bytes);
-    let download_url = web_sys::Url::create_object_url_with_blob(&blob.into()).unwrap();
+    let file_blob= gloo_file::Blob::new(bytes);
+    let download_url = web_sys::Url::create_object_url_with_blob(&file_blob.into())?;
 
-    let a: HtmlElement = document().create_element("a").unwrap().dyn_into().unwrap();
+    let a = document()
+        .create_element("a")?;
     
-    match a.set_attribute("href", &download_url) {
-        Ok(_) => Ok(()),
-        Err(error) => Err(common::Error::JsValue(error.as_string().unwrap_or_default()))
-    }?;
-    match a.set_attribute("download", filename) {
-        Ok(_) => Ok(()),
-        Err(error) => Err(common::Error::JsValue(error.as_string().unwrap_or_default()))
-    }?;
+    a.set_attribute("href", &download_url)?;
+    a.set_attribute("download", filename)?;
+    a.dyn_ref::<HtmlElement>().ok_or(common::Error::HtmlElementDynRef)?.click();
 
-    a.click();
-
-    match document().remove_child(&a) {
-        Ok(_) => Ok(()),
-        Err(error) => Err(common::Error::JsValue(error.as_string().unwrap_or_default()))
-    }?;
+    document().remove_child(&a)?;
 
     Ok(())
 }

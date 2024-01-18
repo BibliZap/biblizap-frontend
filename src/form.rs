@@ -11,6 +11,7 @@ use crate::common::*;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct FormProps {
+    pub on_submit_error: Callback<common::Error>,
     pub on_requesting_table: Callback<()>,
     pub on_receiving_response: Callback<Result<Rc<RefCell<Vec<Article>>>, Error>>,
 }
@@ -23,12 +24,49 @@ struct SnowballParameters {
     search_for: common::SearchFor
 }
 
+impl SnowballParameters {
+    fn new(id_list_node: NodeRef,
+            depth_node: NodeRef,
+            output_max_size_node: NodeRef,
+            search_for_node: NodeRef) -> Result<Self, common::Error> {
+
+        let input_id_list = get_value(&id_list_node)
+            .ok_or(common::NodeRefMissingValue::IdList)?
+            .trim()
+            .split(' ')
+            .map(str::to_string)
+            .collect::<Vec<String>>();
+        
+        let output_max_size = get_value(&output_max_size_node)
+            .ok_or(common::NodeRefMissingValue::OutputMaxSize)?
+            .parse::<usize>()?;
+
+        let depth = get_value(&depth_node)
+            .ok_or(common::NodeRefMissingValue::Depth)?
+            .parse::<u8>()?;
+        
+        let search_for = match get_value(&search_for_node).ok_or(common::NodeRefMissingValue::SearchFor)?.as_str() {
+                "References" => SearchFor::References,
+                "Citations" => SearchFor::Citations,
+                "Both" => SearchFor::Both,
+                &_ => SearchFor::Both
+            };
+
+        Ok(SnowballParameters {
+            output_max_size,
+            depth,
+            input_id_list,
+            search_for
+        })
+    }
+}
+
 async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Vec<Article>>>, Error> {
     use gloo_utils::document;
     let url = document().document_uri();
     let url = match url {
         Ok(href) => Ok(href),
-        Err(err) => Err(Error::JsValue(err.as_string().unwrap_or_default()))
+        Err(err) => Err(Error::JsValueString(err.as_string().unwrap_or_default()))
     }?.replace('#', "");
 
     let response = gloo_net::http::Request::post(&format!("{}api", url))
@@ -59,35 +97,25 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         let depth_node = depth_node.clone();
         let output_max_size_node = output_max_size_node.clone();
         let search_for_node = search_for_node.clone();
+        let on_submit_error = props.on_submit_error.clone();
         let on_receiving_response = props.on_receiving_response.clone();
         let on_requesting_table = props.on_requesting_table.clone();
+        
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             on_requesting_table.emit(());
             
+            let form_content = SnowballParameters::new(id_list_node.clone(),
+                    depth_node.clone(),
+                    output_max_size_node.clone(),
+                    search_for_node.clone());
 
-            let input_id_list = get_value(&id_list_node).unwrap()
-                .trim()
-                .split(' ')
-                .map(str::to_string)
-                .collect::<Vec<String>>();
-
-            let depth = get_value(&depth_node).unwrap().parse::<u8>().unwrap();
-
-            let output_max_size = get_value(&output_max_size_node).unwrap().parse::<usize>().unwrap();
-            
-            let search_for = match get_value(&search_for_node).unwrap().as_str() {
-                "References" => SearchFor::References,
-                "Citations" => SearchFor::Citations,
-                "Both" => SearchFor::Both,
-                &_ => SearchFor::Both
-            };
-            
-            let form_content = SnowballParameters {
-                output_max_size,
-                depth,
-                input_id_list,
-                search_for
+            let form_content = match form_content {
+                Ok(form_content) => form_content,
+                Err(error) => {
+                    on_submit_error.emit(error);
+                    return
+                }
             };
             
             let on_receiving_response = on_receiving_response.clone();
@@ -97,10 +125,11 @@ pub fn SnowballForm(props: &FormProps) -> Html {
             });
         })
     };
+    
     html! {
         <form class="container-md" onsubmit={onsubmit} style={"margin-bottom: 50px;"}>
             <div class="mb-3 form-check">
-                <label for="idInput" class="form-label">{"Enter a PMID, a DOI or a Lens ID"}</label>
+                <label for="idInput" class="form-label">{"Enter a list of PMIDs, DOIs or Lens IDs"}</label>
                 <input type="text" class="form-control" id="idInput" name="idListInput" ref={id_list_node.clone()}/>
                 <div id="idInputHelp" class="form-text">{"You can enter multiple references separated by spaces."}</div>
             </div>

@@ -13,13 +13,20 @@ impl PartialEq for RegexWrapper {
 
 impl Default for RegexWrapper {
     fn default() -> Self {
-        Self { regex: Regex::new("").unwrap() }
+        Self {
+            regex: Regex::new("")
+                .expect("failed to create empty regex")
+        }
     }
 }
 
 impl From<&str> for RegexWrapper {
     fn from(value: &str) -> Self {
-        Self { regex: Regex::new(value).unwrap_or(Regex::new("").unwrap()) }
+        Self {
+            regex: Regex::new(value)
+                .unwrap_or(Regex::new("")
+                .expect("failed to create empty regex"))
+        }
     }
 }
 

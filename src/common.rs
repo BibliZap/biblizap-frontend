@@ -1,4 +1,5 @@
 use thiserror::Error;
+use wasm_bindgen::JsValue;
 use yew::prelude::*;
 
 #[derive(Error, Debug)]
@@ -16,7 +17,33 @@ pub enum Error {
     #[error("Csv into_inner error")]
     CsvIntoInner(String),
     #[error("JsValue error")]
-    JsValue(String)
+    JsValueString(String),
+    #[error(transparent)]
+    TryFromInt(#[from] std::num::TryFromIntError),
+    #[error(transparent)]
+    ParseInt(#[from] std::num::ParseIntError),
+    #[error("HtmlElement dyn_ref error")]
+    HtmlElementDynRef,
+    #[error(transparent)]
+    NodeRefMissingValue(#[from] NodeRefMissingValue)
+}
+
+#[derive(Error, Debug)]
+pub enum NodeRefMissingValue {
+    #[error("Id list is missing")]
+    IdList,
+    #[error("Output max size is missing")]
+    OutputMaxSize,
+    #[error("Depth is missing")]
+    Depth,
+    #[error("SearchFor is missing")]
+    SearchFor
+}
+
+impl From<JsValue> for Error {
+    fn from(value: JsValue) -> Self {
+        Error::JsValueString(value.as_string().unwrap_or_default())
+    }
 }
 
 #[derive(PartialEq)]
