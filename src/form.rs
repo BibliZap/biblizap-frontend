@@ -69,6 +69,8 @@ async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Ve
         Err(err) => Err(Error::JsValueString(err.as_string().unwrap_or_default()))
     }?.replace('#', "");
 
+    let url = "http://127.0.0.1:8080/";
+
     let response = gloo_net::http::Request::post(&format!("{}api", url))
         .header("Access-Control-Allow-Origin", "*")
         .body(serde_json::to_string(&form_content)?)?
@@ -83,6 +85,23 @@ async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Ve
     articles.sort_by_key(|article| std::cmp::Reverse(article.score.unwrap_or_default()));
     
     Ok(Rc::new(RefCell::new(articles)))
+}
+
+fn id_list_prefill() -> Option<String> {
+    let url = gloo_utils::document().document_uri();
+    let url = match url {
+        Ok(href) => Ok(href),
+        Err(err) => Err(Error::JsValueString(err.as_string().unwrap_or_default()))
+    }.ok()?;
+
+    let id_list_prefill = url::Url::parse(&url).ok()?
+        .query_pairs()
+        .filter(|(k, _)| k.eq("input_prefill"))
+        .map(|(_,v)| v)
+        .fold(String::with_capacity(url.len()), |a, b| a+&b)
+        .replace(',', " ");
+
+    Some(id_list_prefill)
 }
 
 #[function_component]
@@ -130,7 +149,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         <form class="container-md" onsubmit={onsubmit} style={"margin-bottom: 50px;"}>
             <div class="mb-3 form-check">
                 <label for="idInput" class="form-label">{"Enter a list of PMIDs, DOIs or Lens IDs"}</label>
-                <input type="text" class="form-control" id="idInput" name="idListInput" ref={id_list_node.clone()}/>
+                <input type="text" class="form-control" id="idInput" name="idListInput" ref={id_list_node.clone()} value={id_list_prefill().unwrap_or_default()}/>
                 <div id="idInputHelp" class="form-text">{"You can enter multiple references separated by spaces."}</div>
             </div>
             <div class="mb-3 form-check">
