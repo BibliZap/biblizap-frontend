@@ -94,7 +94,7 @@ fn id_list_prefill() -> Option<String> {
 
     let id_list_prefill = url::Url::parse(&url).ok()?
         .query_pairs()
-        .filter(|(k, _)| k.eq("input_prefill"))
+        .filter(|(k, _)| k.eq("id_list_prefill"))
         .map(|(_,v)| v)
         .fold(String::with_capacity(url.len()), |a, b| a+&b)
         .replace(',', " ");
@@ -108,6 +108,19 @@ pub fn SnowballForm(props: &FormProps) -> Html {
     let depth_node = use_node_ref();
     let output_max_size_node = use_node_ref();
     let search_for_node = use_node_ref();
+    
+    let id_list = use_state(|| id_list_prefill().unwrap_or_default());
+
+    let onchange = {
+        let id_list_node = id_list_node.clone();
+        let id_list = id_list.clone();
+        Callback::from(move |_| {
+            let input = id_list_node.cast::<web_sys::HtmlInputElement>();
+            if let Some(input) = input {
+                id_list.set(input.value());
+            }
+        })
+    };
     
     let onsubmit: Callback<SubmitEvent> = {
         let id_list_node = id_list_node.clone();
@@ -147,7 +160,7 @@ pub fn SnowballForm(props: &FormProps) -> Html {
         <form class="container-md" onsubmit={onsubmit} style={"margin-bottom: 50px;"}>
             <div class="mb-3 form-check">
                 <label for="idInput" class="form-label">{"Enter a list of PMIDs, DOIs or Lens IDs"}</label>
-                <input type="text" class="form-control" id="idInput" name="idListInput" ref={id_list_node.clone()} value={id_list_prefill().unwrap_or_default()}/>
+                <input type="text" class="form-control" id="idInput" {onchange} ref={id_list_node.clone()} value={id_list.to_string()}/>
                 <div id="idInputHelp" class="form-text">{"You can enter multiple references separated by spaces."}</div>
             </div>
             <div class="mb-3 form-check">
