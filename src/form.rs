@@ -69,7 +69,12 @@ async fn get_response(form_content: &SnowballParameters) -> Result<Rc<RefCell<Ve
         Err(err) => Err(Error::JsValueString(err.as_string().unwrap_or_default()))
     }?.replace('#', "");
 
-    let response = gloo_net::http::Request::post(&format!("{}api", url))
+    let mut api_url = url::Url::parse(&url)?;
+    api_url.set_fragment("".into());
+    api_url.set_query("".into());
+    api_url.set_path("api");
+
+    let response = gloo_net::http::Request::post(api_url.as_str())
         .header("Access-Control-Allow-Origin", "*")
         .body(serde_json::to_string(&form_content)?)?
         .send()

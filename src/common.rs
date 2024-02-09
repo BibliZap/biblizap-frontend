@@ -25,7 +25,9 @@ pub enum Error {
     #[error("HtmlElement dyn_ref error")]
     HtmlElementDynRef,
     #[error(transparent)]
-    NodeRefMissingValue(#[from] NodeRefMissingValue)
+    NodeRefMissingValue(#[from] NodeRefMissingValue),
+    #[error(transparent)]
+    UrlParse(#[from] url::ParseError)
 }
 
 #[derive(Error, Debug)]
