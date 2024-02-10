@@ -60,7 +60,6 @@ pub struct TableProps {
 
 #[function_component(Table)]
 pub fn table(props: &TableProps) -> Html {
-    
     let selected_articles = use_mut_ref(Vec::<String>::new);
     let selected_articles = use_state(|| selected_articles);
 
@@ -107,11 +106,11 @@ pub fn table(props: &TableProps) -> Html {
         })
     };
     
-    let article_per_page = use_state(|| 10i32);
+    let articles_per_page = use_state(|| 10i32);
     let table_current_page = use_state(|| 0i32);
 
-    let first_article = (table_current_page.deref() * article_per_page.deref()).clamp(0, articles_to_display.len() as i32) as usize;
-    let last_article = (first_article as i32 + article_per_page.deref()).clamp(0, articles_to_display.len() as i32) as usize;
+    let first_article = (table_current_page.deref() * articles_per_page.deref()).clamp(0, articles_to_display.len() as i32) as usize;
+    let last_article = (first_article as i32 + articles_per_page.deref()).clamp(0, articles_to_display.len() as i32) as usize;
     let articles_slice = &articles_to_display[first_article..last_article];
 
     let trigger_update = use_force_update();
@@ -122,7 +121,7 @@ pub fn table(props: &TableProps) -> Html {
     };
     
     html! {
-        <div class="container-fluid">
+        <div id="table" class="container-fluid">
             <hr/>
             <TableGlobalSearch filter={global_filter.clone()}/>
             <table class="table table-hover table-bordered" style="table-layout:fixed">
@@ -156,7 +155,7 @@ pub fn table(props: &TableProps) -> Html {
                     { articles_slice.iter().map(|article| html!{<Row article={article.clone()} update_selected={update_selected.clone()}/>} ).collect::<Html>() }
                 </tbody>
             </table>
-            <TableFooter article_total_number={articles_to_display.len()} article_per_page={article_per_page} table_current_page={table_current_page}/>
+            <TableFooter article_total_number={articles_to_display.len()} articles_per_page={articles_per_page} table_current_page={table_current_page}/>
             <DownloadButton onclick={on_download_click}/>
         </div>
     }

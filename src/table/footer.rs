@@ -1,23 +1,24 @@
 use std::ops::Deref;
 
+use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use web_sys::HtmlElement;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct TableFooterProps {
     pub article_total_number: usize,
-    pub article_per_page: UseStateHandle<i32>,
+    pub articles_per_page: UseStateHandle<i32>,
     pub table_current_page: UseStateHandle<i32>
 }
 
 #[function_component(TableFooter)]
 pub fn table_footer(props: &TableFooterProps) -> Html {
     let table_current_page = props.table_current_page.deref().to_owned();
-    let article_per_page = props.article_per_page.deref().to_owned();
-    let first_article = table_current_page * article_per_page + 1;
-    let last_article = first_article + article_per_page - 1;
+    let articles_per_page = props.articles_per_page.deref().to_owned();
+    let first_article = table_current_page * articles_per_page + 1;
+    let last_article = first_article + articles_per_page - 1;
 
-    let total_page_number = (props.article_total_number as i32) / article_per_page;
+    let total_page_number = (props.article_total_number as i32) / articles_per_page;
     let last_page_index = total_page_number - 1;
     
     let contiguous_window_radius = 2;
@@ -27,26 +28,32 @@ pub fn table_footer(props: &TableFooterProps) -> Html {
 
     let contiguous_range = contiguous_low_bound..contiguous_high_bound;
     html! {
-        <div class="row" id="table_footer">
+        <div class="row py-2" id="table_footer">
             <div class="col">
-                <div role="status" aria-live="polite">{format!("Showing {} to {} of {} entries", first_article, last_article, props.article_total_number)}</div>
+                <div role="status" aria-live="polite">{format!("Showing {} to {} of {} entries", first_article, std::cmp::min(last_article as usize, props.article_total_number), props.article_total_number)}</div>
+                <ArticlesPerPageDropdown articles_per_page={props.articles_per_page.clone()} table_current_page={props.table_current_page.clone()}/> 
             </div>
+            
 
             <div class="col">
                 <div class="float-end">
                     <ul class="pagination pagination-lg">
                         if contiguous_low_bound != 0 {
                             <PageItem table_current_page={props.table_current_page.clone()} page_index={0}/>
-                            if contiguous_low_bound >= 2 {
-                                <li class="page-item disabled"><a  aria-disabled="true" role="link" tabindex="-1" class="page-link">{"…"}</a></li>
+                            if contiguous_low_bound > 1 {
+                                <li class="page-item disabled">
+                                    <a aria-disabled="true" role="link" tabindex="-1" class="page-link">{"…"}</a>
+                                </li>
                             }
                         }
-
-                        { contiguous_range.into_iter().map(|index| html!{<PageItem table_current_page={props.table_current_page.clone()} page_index={index}/>} ).collect::<Html>() }
+                        
+                        if contiguous_range.len() != 1 {
+                            { contiguous_range.into_iter().map(|index| html!{<PageItem table_current_page={props.table_current_page.clone()} page_index={index}/>} ).collect::<Html>() }
+                        }
                         
                         if contiguous_high_bound != total_page_number {
-                            if total_page_number-contiguous_low_bound >= 2 {
-                                <li class="page-item disabled"><a  aria-disabled="true" role="link" tabindex="-1" class="page-link">{"…"}</a></li>
+                            if total_page_number-contiguous_low_bound > 1 {
+                                <li class="page-item disabled"><a aria-disabled="true" role="link" tabindex="-1" class="page-link">{"…"}</a></li>
                             }
                             <PageItem table_current_page={props.table_current_page.clone()} page_index={last_page_index}/>
                         }
@@ -57,7 +64,60 @@ pub fn table_footer(props: &TableFooterProps) -> Html {
     }
 }
 
+#[derive(Clone, PartialEq, Properties)]
+struct ArticlesPerPageDropdownProps {
+    articles_per_page: UseStateHandle<i32>,
+    table_current_page: UseStateHandle<i32>
+}
+#[function_component(ArticlesPerPageDropdown)]
+fn articles_per_page_dropdown(props: &ArticlesPerPageDropdownProps) -> Html {
+    html! {
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {"Articles per page"}
+            </button>
+    
+            <ul class="dropdown-menu">
+                <ArticlesPerPageDropdownItem table_articles_per_page={props.articles_per_page.clone()} table_current_page={props.table_current_page.clone()} value=10/>
+                <ArticlesPerPageDropdownItem table_articles_per_page={props.articles_per_page.clone()} table_current_page={props.table_current_page.clone()} value=50/>
+                <ArticlesPerPageDropdownItem table_articles_per_page={props.articles_per_page.clone()} table_current_page={props.table_current_page.clone()} value=100/>
+                <ArticlesPerPageDropdownItem table_articles_per_page={props.articles_per_page.clone()} table_current_page={props.table_current_page.clone()} value=500/>
+            </ul>
+        </div>
+    }
+}
 
+#[derive(Clone, PartialEq, Properties)]
+struct ArticlesPerPageDropdownItemProps {
+    table_articles_per_page: UseStateHandle<i32>,
+    table_current_page: UseStateHandle<i32>,
+    value: i32
+}
+
+#[function_component(ArticlesPerPageDropdownItem)]
+fn articles_per_page_dropdown(props: &ArticlesPerPageDropdownItemProps) -> Html {
+    let onclick = {
+        let articles_per_page = props.table_articles_per_page.clone();
+        let table_current_page = props.table_current_page.clone();
+        let value = props.value;
+        Callback::from(move |event: MouseEvent| {
+            table_current_page.set(0);
+            articles_per_page.set(value);
+
+            event.prevent_default();
+            let element = gloo_utils::document()
+                .get_element_by_id("table")
+                .and_then(|element| element.dyn_into::<HtmlElement>().ok());
+            if let Some(element) = element {
+                element.scroll_into_view();
+            }
+        })
+    };
+
+    html! {
+        <li><a class="dropdown-item" {onclick}>{props.value}</a></li>
+    }
+}
 
 #[derive(Clone, PartialEq, Properties)]
 struct PageItemProps {
@@ -70,10 +130,15 @@ fn page_item(props: &PageItemProps) -> Html {
         let table_current_page = props.table_current_page.clone();
         let page_index = props.page_index;
         Callback::from(move |event: MouseEvent| {
-            event.prevent_default();
-            let element = event.target_dyn_into::<HtmlElement>(); 
-            if let Some(element) = element { element.scroll_into_view() }
             table_current_page.set(page_index);
+
+            event.prevent_default();
+            let element = gloo_utils::document()
+                .get_element_by_id("table")
+                .and_then(|element| element.dyn_into::<HtmlElement>().ok());
+            if let Some(element) = element {
+                element.scroll_into_view();
+            }
         })
     };
 
