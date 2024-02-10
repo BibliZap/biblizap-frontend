@@ -1,14 +1,12 @@
+use rand::seq::SliceRandom;
 use yew::prelude::*;
-use shuffle::shuffler::Shuffler;
-use shuffle::irs::Irs;
 
 #[function_component(LegalInformation)]
 pub fn legal_information() -> Html {
     let mut rng = rand::thread_rng();
-    let mut irs = Irs::default();
-    
-    let mut creators = vec!["Bastien Le Guellec", "Raphaël Bentégeac", "Victor Leblanc"];
-    let _ = irs.shuffle(&mut creators, &mut rng);
+
+    let mut creators: [&str; 3] = ["Bastien Le Guellec", "Raphaël Bentégeac", "Victor Leblanc"];
+    creators.shuffle(&mut rng);
     
     let creators = creators.join(", ");
 
