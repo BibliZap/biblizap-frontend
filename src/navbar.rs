@@ -95,7 +95,8 @@ pub fn NavBar(props: &NavBarProps) -> Html {
                         {"Legal information"}
                         </a>
                     </li>
-                    <li class="nav-item float-end" onclick={toggle_dark_mode}>
+                    <BrowserPluginNavItem/>
+                    <li class="nav-item" onclick={toggle_dark_mode}>
                         <button class="nav-link active">
                         if *props.dark_mode.deref() {
                             <i class="bi bi-sun-fill px-2"></i>
@@ -108,5 +109,38 @@ pub fn NavBar(props: &NavBarProps) -> Html {
             </div>
         </div>
     </nav>
+    }
+}
+
+#[function_component]
+pub fn BrowserPluginNavItem() -> Html {
+    use crate::common::{WebBrowser, Error};
+    let window = web_sys::window().expect("Missing Window");
+    let ua = window.navigator().user_agent().unwrap();
+
+    gloo_console::debug!(ua);
+
+    let browser: Result<WebBrowser, Error> = window.navigator().try_into();
+
+    match browser {
+        Ok(browser) => {
+            match browser {
+                WebBrowser::Firefox => html!{ <FirefoxPluginNavItem/> },
+                WebBrowser::Chrome => html!{}
+            }
+        },
+        Err(_) => html!{}
+    }
+}
+
+#[function_component]
+pub fn FirefoxPluginNavItem() -> Html {
+    html! {
+        <li class="nav-item">
+            <a class="nav-link" href="https://addons.mozilla.org/firefox/addon/biblizap/">
+                <i class="bi bi-browser-firefox px-2"></i>
+                {"Firefox Plugin"}
+            </a>
+        </li>
     }
 }
