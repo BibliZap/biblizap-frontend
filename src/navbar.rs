@@ -118,8 +118,6 @@ pub fn BrowserPluginNavItem() -> Html {
     let window = web_sys::window().expect("Missing Window");
     let ua = window.navigator().user_agent().unwrap();
 
-    gloo_console::debug!(ua);
-
     let browser: Result<WebBrowser, Error> = window.navigator().try_into();
 
     match browser {
