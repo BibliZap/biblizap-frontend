@@ -78,17 +78,14 @@ pub fn table(props: &TableProps) -> Html {
 
     let articles = props.articles.to_owned();
     let global_filter = use_state(|| "".to_string());
-    let global_filter_regex = regex::Regex::new(&global_filter).unwrap_or(regex::Regex::new("").unwrap());
-
     let filters = use_mut_ref(Filters::default);
     let filters = use_state(|| filters);
-    
     
     let articles_to_display = articles
         .deref()
         .borrow()
         .iter()
-        .filter(|a| a.matches_global(&global_filter_regex))
+        .filter(|a| a.matches_global(&global_filter))
         .filter(|a| a.matches(&filters.deref().borrow()))
         .cloned()
         .collect::<Vec<_>>();
