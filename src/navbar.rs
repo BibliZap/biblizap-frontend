@@ -116,7 +116,6 @@ pub fn NavBar(props: &NavBarProps) -> Html {
 pub fn BrowserPluginNavItem() -> Html {
     use crate::common::{WebBrowser, Error};
     let window = web_sys::window().expect("Missing Window");
-    let ua = window.navigator().user_agent().unwrap();
 
     let browser: Result<WebBrowser, Error> = window.navigator().try_into();
 
